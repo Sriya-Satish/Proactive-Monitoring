@@ -1,0 +1,29 @@
+pipeline {
+    agent any
+    environment {
+        IBM_REGISTRY = 'icr.io/my-namespace'
+        CLUSTER_NAME = 'monitoring-cluster'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/your-username/your-repo.git'
+            }
+        }
+        stage('Build & Push Docker Image') {
+            steps {
+                sh 'docker build -t $IBM_REGISTRY/monitoring-app:latest .'
+                sh 'docker push $IBM_REGISTRY/monitoring-app:latest'
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''
+                ibmcloud login --apikey <IBM_CLOUD_API_KEY>
+                ibmcloud ks cluster config --cluster $CLUSTER_NAME
+                kubectl apply -f deployment.yaml
+                '''
+            }
+        }
+    }
+}
